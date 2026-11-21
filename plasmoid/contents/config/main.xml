@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+                          http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  <group name="General">
+    <!-- Run through a shell, so $HOME works. The widget appends the json format flag. -->
+    <entry name="command" type="String">
+      <default>$HOME/go/bin/pvebar</default>
+    </entry>
+    <entry name="interval" type="Int">
+      <default>30</default>
+      <min>5</min>
+      <max>3600</max>
+    </entry>
+    <!-- Number of samples kept for the graphs (120 x 30 s = 1 hour). -->
+    <entry name="historySize" type="Int">
+      <default>120</default>
+      <min>10</min>
+      <max>2000</max>
+    </entry>
+    <entry name="warn" type="Int">
+      <default>80</default>
+    </entry>
+    <entry name="crit" type="Int">
+      <default>90</default>
+    </entry>
+  </group>
+</kcfg>

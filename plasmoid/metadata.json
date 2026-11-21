@@ -1,0 +1,19 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "szakky"
+            }
+        ],
+        "Category": "System Information",
+        "Description": "Proxmox VE usage graphs and guest list, using pvebar",
+        "Icon": "network-server",
+        "Id": "io.github.szakky.pvebar",
+        "License": "MIT",
+        "Name": "pvebar",
+        "Version": "0.1",
+        "Website": "https://github.com/szakky/pvebar"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

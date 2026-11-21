@@ -1,6 +1,6 @@
 # pvebar
 
-A tiny status line for [Proxmox VE](https://www.proxmox.com/en/proxmox-virtual-environment) in your tmux or Waybar.
+A tiny status line for [Proxmox VE](https://www.proxmox.com/en/proxmox-virtual-environment) in your tmux, Waybar or KDE Plasma panel.
 
 ```
 PVE CPU 23% RAM 63% VM 2/3
@@ -81,6 +81,28 @@ The CSS class is `ok`, `warning`, `critical` or `error`:
 #custom-pvebar.warning  { color: #e5c07b; }
 #custom-pvebar.critical { color: #e06c75; }
 #custom-pvebar.error    { color: #e06c75; }
+```
+
+## KDE Plasma 6 widget
+
+The `plasmoid/` directory has a Plasma 6 widget that runs `pvebar --format json`.
+The panel shows a small CPU/RAM graph and the running guest count; click it for
+CPU and RAM bars, a larger history graph and the guest list.
+
+```bash
+kpackagetool6 --type Plasma/Applet --install plasmoid    # first time
+kpackagetool6 --type Plasma/Applet --upgrade plasmoid    # after changes
+```
+
+Then right-click the panel, choose **Add or Manage Widgets** and add **pvebar**.
+The default command is `$HOME/go/bin/pvebar`; change it in the widget settings if
+pvebar is somewhere else. Use a full path, because the panel does not read `~/.bashrc`.
+
+The history is kept in memory, so the graph starts empty after Plasma restarts.
+To try the widget without adding it to a panel:
+
+```bash
+plasmoidviewer --applet plasmoid
 ```
 
 ## JSON output
