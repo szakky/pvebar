@@ -1,0 +1,5 @@
+# Built binary
+/pvebar
+
+# Never commit your token
+config.json
