@@ -83,11 +83,24 @@ The CSS class is `ok`, `warning`, `critical` or `error`:
 #custom-pvebar.error    { color: #e06c75; }
 ```
 
+## JSON output
+
+`--format json` prints the raw numbers for widgets and scripts:
+
+```json
+{"version":1,"ok":true,"cpu":2.3,"mem":39.1,"mem_used":6710886400,"mem_total":17179869184,"running":2,"total":3,
+ "guests":[{"vmid":100,"name":"k3s","type":"qemu","node":"proxmox","status":"running","cpu":4.1,"mem":4294967296,"maxmem":8589934592}]}
+```
+
+Percentages are 0 - 100 (guest `cpu` is a percent of that guest's own vCPUs) and memory is in bytes.
+On an error it prints `{"version":1,"ok":false,"error":"..."}` and exits 0.
+`version` changes only when a field is removed or changes meaning.
+
 ## Options
 
 | Flag | Default | Description |
 | --- | --- | --- |
-| `--format` | `plain` | `plain` or `waybar` |
+| `--format` | `plain` | `plain`, `waybar` or `json` |
 | `--config` | `~/.config/pvebar/config.json` | Path to the config file |
 | `--timeout` | `5s` | Timeout for the API request |
 | `--warn` | `80` | Percent of CPU or RAM that sets the `warning` class |
@@ -97,7 +110,7 @@ The CSS class is `ok`, `warning`, `critical` or `error`:
 CPU is averaged across nodes, weighted by core count. Templates are not counted as guests.
 
 On an error pvebar prints `PVE !` and the details to stderr.
-In `waybar` mode it prints an `error` JSON object and exits 0, so the bar keeps showing the error state.
+In `waybar` and `json` modes it prints an error JSON object and exits 0, so the bar or widget keeps showing the error state.
 
 ## Development
 

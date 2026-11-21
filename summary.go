@@ -4,11 +4,13 @@ import "sort"
 
 // Summary is what pvebar shows: overall usage and the guest list.
 type Summary struct {
-	CPU     float64    // percent, 0 - 100, weighted by core count across nodes
-	Mem     float64    // percent, 0 - 100, across nodes
-	Running int        // guests with status "running"
-	Total   int        // all guests (templates excluded)
-	Guests  []Resource // VMs and containers, sorted by VMID
+	CPU      float64    // percent, 0 - 100, weighted by core count across nodes
+	Mem      float64    // percent, 0 - 100, across nodes
+	MemUsed  int64      // bytes, summed across nodes
+	MemTotal int64      // bytes, summed across nodes
+	Running  int        // guests with status "running"
+	Total    int        // all guests (templates excluded)
+	Guests   []Resource // VMs and containers, sorted by VMID
 }
 
 // Summarize turns raw cluster resources into a Summary.
@@ -43,6 +45,9 @@ func Summarize(resources []Resource) Summary {
 	if cpuTotal > 0 {
 		s.CPU = cpuUsed / cpuTotal * 100
 	}
+
+	s.MemUsed = memUsed
+	s.MemTotal = memTotal
 
 	if memTotal > 0 {
 		s.Mem = float64(memUsed) / float64(memTotal) * 100

@@ -98,3 +98,83 @@ func TestFormatWaybarError(t *testing.T) {
 		t.Errorf("unexpected error output: %+v", out)
 	}
 }
+
+func TestFormatJSON(t *testing.T) {
+	t.Parallel()
+
+	s := Summary{
+		CPU: 23.456, Mem: 61.04, MemUsed: 2 << 30, MemTotal: 8 << 30, Running: 1, Total: 2,
+		Guests: []Resource{
+			{VMID: 100, Name: "k3s", Type: "qemu", Node: "pve", Status: "running", CPU: 0.1234, Mem: 1 << 30, MaxMem: 4 << 30},
+			{VMID: 200, Name: "test", Type: "lxc", Node: "pve", Status: "stopped"},
+		},
+	}
+
+	line, err := FormatJSON(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var out jsonOutput
+	if err := json.Unmarshal([]byte(line), &out); err != nil {
+		t.Fatalf("output is not valid JSON: %v\n%s", err, line)
+	}
+
+	if !out.OK || out.Version != jsonVersion {
+		t.Errorf("ok/version = %v/%d, want true/%d", out.OK, out.Version, jsonVersion)
+	}
+
+	if out.CPU != 23.5 || out.Mem != 61 {
+		t.Errorf("cpu/mem = %v/%v, want 23.5/61 (rounded to 0.1)", out.CPU, out.Mem)
+	}
+
+	if out.MemUsed != 2<<30 || out.MemTotal != 8<<30 || out.Running != 1 || out.Total != 2 {
+		t.Errorf("unexpected totals: %+v", out)
+	}
+
+	if len(out.Guests) != 2 {
+		t.Fatalf("got %d guests, want 2", len(out.Guests))
+	}
+
+	g := out.Guests[0]
+	if g.VMID != 100 || g.Name != "k3s" || g.Type != "qemu" || g.Node != "pve" || g.Status != "running" {
+		t.Errorf("unexpected guest: %+v", g)
+	}
+
+	// The API reports guest CPU as 0.0 - 1.0; JSON uses percent like the totals.
+	if g.CPU != 12.3 || g.Mem != 1<<30 || g.MaxMem != 4<<30 {
+		t.Errorf("guest cpu/mem/maxmem = %v/%d/%d", g.CPU, g.Mem, g.MaxMem)
+	}
+}
+
+func TestFormatJSONNoGuestsIsEmptyArray(t *testing.T) {
+	t.Parallel()
+
+	line, err := FormatJSON(Summary{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Widgets iterate over guests, so it must be [] and not null.
+	if !strings.Contains(line, `"guests":[]`) {
+		t.Errorf("guests should be an empty array: %s", line)
+	}
+}
+
+func TestFormatJSONError(t *testing.T) {
+	t.Parallel()
+
+	line, err := FormatJSONError(errors.New("connection refused"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var out jsonError
+	if err := json.Unmarshal([]byte(line), &out); err != nil {
+		t.Fatal(err)
+	}
+
+	if out.OK || out.Error != "connection refused" || out.Version != jsonVersion {
+		t.Errorf("unexpected error output: %+v", out)
+	}
+}

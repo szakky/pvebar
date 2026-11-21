@@ -30,6 +30,10 @@ func TestSummarize(t *testing.T) {
 		t.Errorf("Mem = %.2f, want 25", s.Mem)
 	}
 
+	if s.MemUsed != 4<<30 || s.MemTotal != 16<<30 {
+		t.Errorf("MemUsed/MemTotal = %d/%d, want 4 GiB/16 GiB", s.MemUsed, s.MemTotal)
+	}
+
 	if s.Running != 2 || s.Total != 3 {
 		t.Errorf("Running/Total = %d/%d, want 2/3 (template excluded)", s.Running, s.Total)
 	}

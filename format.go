@@ -39,7 +39,7 @@ func FormatWaybar(s Summary, warn, crit float64) (string, error) {
 		lines = append(lines, fmt.Sprintf("%d %s (%s): %s", g.VMID, g.Name, g.Type, g.Status))
 	}
 
-	return marshalWaybar(waybarOutput{
+	return marshalLine(waybarOutput{
 		Text:       fmt.Sprintf("PVE %.0f%% %.0f%% %d/%d", s.CPU, s.Mem, s.Running, s.Total),
 		Tooltip:    strings.Join(lines, "\n"),
 		Class:      class,
@@ -49,18 +49,92 @@ func FormatWaybar(s Summary, warn, crit float64) (string, error) {
 
 // FormatWaybarError returns Waybar JSON that shows an error state instead of empty output.
 func FormatWaybarError(err error) (string, error) {
-	return marshalWaybar(waybarOutput{
+	return marshalLine(waybarOutput{
 		Text:    "PVE !",
 		Tooltip: err.Error(),
 		Class:   "error",
 	})
 }
 
-func marshalWaybar(out waybarOutput) (string, error) {
-	b, err := json.Marshal(out)
+// jsonVersion is bumped when a field in the JSON output changes meaning or is removed.
+// Adding a field does not change it.
+const jsonVersion = 1
+
+// jsonOutput is the machine-readable format for widgets and scripts.
+// Percentages are 0 - 100; memory is in bytes.
+type jsonOutput struct {
+	Version  int         `json:"version"`
+	OK       bool        `json:"ok"`
+	CPU      float64     `json:"cpu"`
+	Mem      float64     `json:"mem"`
+	MemUsed  int64       `json:"mem_used"`
+	MemTotal int64       `json:"mem_total"`
+	Running  int         `json:"running"`
+	Total    int         `json:"total"`
+	Guests   []jsonGuest `json:"guests"`
+}
+
+type jsonGuest struct {
+	VMID   int     `json:"vmid"`
+	Name   string  `json:"name"`
+	Type   string  `json:"type"`
+	Node   string  `json:"node"`
+	Status string  `json:"status"`
+	CPU    float64 `json:"cpu"` // percent of the guest's own vCPUs
+	Mem    int64   `json:"mem"`
+	MaxMem int64   `json:"maxmem"`
+}
+
+type jsonError struct {
+	Version int    `json:"version"`
+	OK      bool   `json:"ok"`
+	Error   string `json:"error"`
+}
+
+// FormatJSON returns the summary as one line of JSON with the raw numbers.
+func FormatJSON(s Summary) (string, error) {
+	guests := make([]jsonGuest, 0, len(s.Guests))
+	for _, g := range s.Guests {
+		guests = append(guests, jsonGuest{
+			VMID:   g.VMID,
+			Name:   g.Name,
+			Type:   g.Type,
+			Node:   g.Node,
+			Status: g.Status,
+			CPU:    round1(g.CPU * 100),
+			Mem:    g.Mem,
+			MaxMem: g.MaxMem,
+		})
+	}
+
+	return marshalLine(jsonOutput{
+		Version:  jsonVersion,
+		OK:       true,
+		CPU:      round1(s.CPU),
+		Mem:      round1(s.Mem),
+		MemUsed:  s.MemUsed,
+		MemTotal: s.MemTotal,
+		Running:  s.Running,
+		Total:    s.Total,
+		Guests:   guests,
+	})
+}
+
+// FormatJSONError returns JSON with ok=false so a widget can show the error.
+func FormatJSONError(err error) (string, error) {
+	return marshalLine(jsonError{Version: jsonVersion, OK: false, Error: err.Error()})
+}
+
+func marshalLine(v any) (string, error) {
+	b, err := json.Marshal(v)
 	if err != nil {
-		return "", fmt.Errorf("encoding waybar output: %w", err)
+		return "", fmt.Errorf("encoding json output: %w", err)
 	}
 
 	return string(b), nil
+}
+
+// round1 rounds to one decimal place to keep the output short.
+func round1(x float64) float64 {
+	return math.Round(x*10) / 10
 }
